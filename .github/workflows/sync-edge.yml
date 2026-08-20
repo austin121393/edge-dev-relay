@@ -2,8 +2,11 @@ name: Sync Edge Dev Releases
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Runs automatically once every 24 hours
-  workflow_dispatch: # Allows manual trigger anytime
+    - cron: '0 0 * * *' # Runs automatically every 24 hours
+  workflow_dispatch: # Allows manual triggers
+
+permissions:
+  contents: write
 
 jobs:
   sync:
@@ -12,34 +15,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Fetch Latest Edge Dev APK
-        run: |
-          # Query APKMirror RSS Feed for Microsoft Edge Dev
-          RSS_URL="https://www.apkmirror.com/apk/microsoft-corporation/microsoft-edge-dev/feed/"
-          LATEST_URL=$(curl -sL "$RSS_URL" | grep -oP 'https://www.apkmirror.com/apk/microsoft-corporation/microsoft-edge-dev/microsoft-edge-dev-[^"]+' | head -n 1)
-          
-          echo "Found latest version page: $LATEST_URL"
-          
-          # Extract Version String
-          VERSION=$(echo "$LATEST_URL" | grep -oP '\d+\.\d+\.\d+\.\d+' || echo "latest")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Download Edge Dev from APKMirror
+        uses: Yakov5776/gh-apkmirror-dl@v1
+        with:
+          org: "microsoft-corporation"
+          repo: "microsoft-edge-dev"
+          file_name: "edge-dev.apk"
 
-      - name: Download and Package Asset
-        run: |
-          # Fetch APK using simple-get/curl placeholder
-          # Note: Scraping APKMirror directly requires Cloudflare bypass headers in standard setups.
-          # Create placeholder binary build step for release pipeline validation:
-          mkdir -p output
-          echo "Edge Dev Version ${{ env.VERSION }}" > output/release-notes.txt
-
-      - name: Publish to GitHub Releases
+      - name: Create Release and Upload APK
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: "v${{ env.VERSION }}"
-          name: "Microsoft Edge Dev v${{ env.VERSION }}"
-          body_path: output/release-notes.txt
-          files: |
-            output/*.apk
+          tag_name: "v${{ github.run_number }}"
+          name: "Microsoft Edge Dev Release"
+          files: "edge-dev.apk"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
