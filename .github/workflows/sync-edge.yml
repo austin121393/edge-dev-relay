@@ -22,14 +22,17 @@ jobs:
           repo: "microsoft-edge-dev"
           bundle: false
 
-      - name: Prepare Files
+      - name: Rename APK File
         run: |
-          mkdir -p public
           RAW_FILE=$(ls *.apk | head -n 1)
-          cp "$RAW_FILE" public/edge-dev.apk
+          mv "$RAW_FILE" "edge-dev.apk"
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          tag_name: "latest"
+          name: "Microsoft Edge Dev Latest"
+          files: "edge-dev.apk"
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
