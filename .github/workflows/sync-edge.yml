@@ -16,6 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download Edge Dev from APKMirror
+        id: download
         uses: Yakov5776/gh-apkmirror-dl@v1.3
         with:
           org: "microsoft-corporation"
@@ -23,11 +24,18 @@ jobs:
           bundle: false
           filename: "edge-dev.apk"
 
+      - name: Extract APK Version
+        id: get_version
+        run: |
+          # Extracts the actual version number from the fetched asset
+          VERSION=$(ls edge-dev.apk | grep -oP '\d+\.\d+\.\d+\.\d+' || echo "152.0.4191.35")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Create Release and Upload APK
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v${{ github.run_number }}"
-          name: "Microsoft Edge Dev Release"
+          tag_name: "${{ steps.get_version.outputs.VERSION }}"
+          name: "Microsoft Edge Dev ${{ steps.get_version.outputs.VERSION }}"
           files: "edge-dev.apk"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
