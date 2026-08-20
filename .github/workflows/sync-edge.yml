@@ -21,20 +21,15 @@ jobs:
           org: "microsoft-corporation"
           repo: "microsoft-edge-dev"
           bundle: false
-          filename: "edge-dev.apk"
 
-      - name: Get Version Number
-        id: prep
+      - name: Prepare Files
         run: |
-          VERSION=$(curl -s https://api.github.com/repos/Yakov5776/gh-apkmirror-dl/releases | grep -oP '\d+\.\d+\.\d+\.\d+' | head -n 1 || echo "152.0.4191.35")
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          mkdir -p public
+          RAW_FILE=$(ls *.apk | head -n 1)
+          cp "$RAW_FILE" public/edge-dev.apk
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          tag_name: "152.0.4191.35"
-          name: "Microsoft Edge Dev 152.0.4191.35"
-          files: "edge-dev.apk"
-          prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
