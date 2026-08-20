@@ -15,26 +15,33 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Download Edge Dev from APKMirror
+      - name: Download Edge Dev APK
         uses: Yakov5776/gh-apkmirror-dl@v1.3
         with:
           org: "microsoft-corporation"
           repo: "microsoft-edge-dev"
           bundle: false
 
-      - name: Find Version and Rename APK
+      - name: Extract Version and Rename Asset
         id: prep
         run: |
-          APK_FILE=$(ls *.apk | head -n 1)
-          VERSION=$(echo "$APK_FILE" | grep -oP '\d+\.\d+\.\d+\.\d+' || echo "152.0.4191.35")
+          # Find the downloaded APK file
+          RAW_FILE=$(ls *.apk | head -n 1)
+          
+          # Extract numerical version (e.g., 152.0.4191.35)
+          VERSION=$(echo "$RAW_FILE" | grep -oP '\d+\.\d+\.\d+\.\d+' || echo "152.0.4191.35")
+          
+          # Rename to a clean standard name
+          mv "$RAW_FILE" "edge-dev.apk"
+          
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "FILE=$APK_FILE" >> $GITHUB_OUTPUT
 
-      - name: Create Release and Upload APK
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "${{ steps.prep.outputs.VERSION }}"
           name: "Microsoft Edge Dev ${{ steps.prep.outputs.VERSION }}"
-          files: "*.apk"
+          files: "edge-dev.apk"
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
